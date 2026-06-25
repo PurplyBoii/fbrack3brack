@@ -225,13 +225,10 @@ public class GameControllerScript : MonoBehaviour
 			e.Lower(); //Lowers all the exits
 		}
 		baldiTutor.SetActive(false); //Turns off Baldi(The one that you see at the start of the game)
-		baldi.SetActive(true); //Turns on Baldi
-        principal.SetActive(true); //Turns on Principal
-        crafters.SetActive(true); //Turns on Crafters
-        playtime.SetActive(true); //Turns on Playtime
-        gottaSweep.SetActive(true); //Turns on Gotta Sweep
-        bully.SetActive(true); //Turns on Bully
-        firstPrize.SetActive(true); //Turns on First-Prize
+		foreach (GameObject npc in spoopNpcs)
+		{
+			npc.SetActive(true);
+		}
 		//TestEnemy.SetActive(true); //Turns on Test-Enemy (Bonus)
 		audioDevice.PlayOneShot(sfx[3]); //Plays the hang sound
 		learnMusic.Stop(); //Stop all the music
@@ -591,21 +588,15 @@ public class GameControllerScript : MonoBehaviour
     private int cullingMask;
 	public EntranceScript[] entrances;
 	public GameObject baldiTutor;
-	public GameObject baldi;
 	public BaldiScript baldiScrpt;
 	public AudioClip aud_Prize;
 	public AudioClip aud_PrizeMobile;
 	public AudioClip aud_AllNotebooks;
 	private bool flipped;
-	public GameObject principal;
-	public GameObject crafters;
-	public GameObject playtime;
-	public PlaytimeScript playtimeScript;
-	public GameObject gottaSweep;
-	public GameObject bully;
-	public GameObject firstPrize;
+	public GameObject[] spoopNpcs;
 	public GameObject TestEnemy;
 	public FirstPrizeScript firstPrizeScript;
+	public PlaytimeScript playtimeScript;
 	public GameObject quarter;
 	public AudioSource tutorBaldi;
 	public RectTransform boots;
