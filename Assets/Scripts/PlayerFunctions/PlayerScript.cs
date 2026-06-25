@@ -27,7 +27,7 @@ public class PlayerScript : MonoBehaviour
 		GuiltCheck();
 		if (cc.velocity.magnitude > 0f)
 		{
-			gc.LockMouse();
+			gc.MouseLock(true);
 		}
 		if (jumpRope & (transform.position - frozenPosition).magnitude >= 1f) // If the player moves, deactivate the jumprope minigame
 		{
