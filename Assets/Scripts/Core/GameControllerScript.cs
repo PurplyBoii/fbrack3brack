@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
@@ -23,6 +24,14 @@ public class GameControllerScript : MonoBehaviour
 	}
 	private void Update()
 	{
+		if (ok > 0f)
+		{
+			ok -= Time.deltaTime * 1.5f;
+			Color yo = popup.color;
+			yo.a = ok;
+			popup.color = yo;
+		}
+
 		if (!learningActive)
 		{
 			if (Singleton<InputManager>.Instance.GetActionKeyDown(InputAction.PauseOrCancel) && !player.gameOver)
@@ -140,20 +149,25 @@ public class GameControllerScript : MonoBehaviour
 		if (mode == "story")
 		{
 			notebookCount.text = notebooks.ToString() + "/7 Notebooks";
+			if (notebooks == 2)
+			{
+				ActivateSpoopMode();
+			}
+			if (notebooks == 7)
+			{
+				ActivateFinaleMode();
+			}
 		}
 		else
 		{
 			notebookCount.text = notebooks.ToString() + " Notebooks";
 		}
-
-		if (notebooks == 7 & mode == "story")
-		{
-			ActivateFinaleMode();
-		}
 	}
 	public void CollectNotebook()
 	{
 		notebooks++;
+		ok = 1f;
+		popup.gameObject.GetComponent<AudioSource>().Play();
 		UpdateNotebookCount();
 	}
 	public void LockMouse()
@@ -654,4 +668,6 @@ public class GameControllerScript : MonoBehaviour
 	public AudioClip aud_Switch;
 	public AudioSource schoolMusic;
 	public AudioSource learnMusic;
+	public TMP_Text popup;
+	public float ok;
 }

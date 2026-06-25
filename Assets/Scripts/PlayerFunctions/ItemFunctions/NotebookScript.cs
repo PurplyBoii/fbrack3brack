@@ -34,10 +34,10 @@ public class NotebookScript : MonoBehaviour
 				up = false;
 				respawnTime = 120f;
 				gc.CollectNotebook();
-				GameObject gameObject = Instantiate<GameObject>(learningGame);
+				/*GameObject gameObject = Instantiate<GameObject>(learningGame);
 				gameObject.GetComponent<MathGameScript>().gc = gc;
 				gameObject.GetComponent<MathGameScript>().baldiScript = bsc;
-				gameObject.GetComponent<MathGameScript>().playerPosition = player.position;
+				gameObject.GetComponent<MathGameScript>().playerPosition = player.position;*/
 			}
 		}
 	}
