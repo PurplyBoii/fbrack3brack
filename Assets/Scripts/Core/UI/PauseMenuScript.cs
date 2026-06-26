@@ -9,12 +9,12 @@ public class PauseMenuScript : MonoBehaviour
         {
             if (!gc.mouseLocked)
             {
-                gc.LockMouse();
+                gc.MouseLock(true);
             }
         }
         else if (!usingJoystick && gc.mouseLocked)
         {
-            gc.UnlockMouse();
+            gc.MouseLock(false);
         }
     }
     public GameControllerScript gc;

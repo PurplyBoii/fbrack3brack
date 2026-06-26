@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
@@ -16,57 +17,70 @@ public class GameControllerScript : MonoBehaviour
 			baldiScrpt.endless = true; //Set Baldi use his slightly changed endless anger system
 		}
 		schoolMusic.Play(); //Play the school music
-		LockMouse(); //Prevent the mouse from moving
+		MouseLock(true); //Prevent the mouse from moving
 		UpdateNotebookCount(); //Update the notebook count
 		itemSelected = 0; //Set selection to item slot 0(the first item slot)
 		gameOverDelay = 0.5f;
 	}
 	private void Update()
 	{
+		if (ok > 0f)
+		{
+			ok -= Time.deltaTime * 1.5f;
+			Color yo = popup.color;
+			yo.a = ok;
+			popup.color = yo;
+		}
+
 		if (!learningActive)
 		{
 			if (Singleton<InputManager>.Instance.GetActionKeyDown(InputAction.PauseOrCancel) && !player.gameOver)
 			{
 				if (!gamePaused)
 				{
-					PauseGame();
+					Pause(true);
 				}
 				else
 				{
-					UnpauseGame();
+					Pause(false);
 				}
 			}
 			
-			if (Input.GetKeyDown(KeyCode.Y) & gamePaused)
+			if (gamePaused)
 			{
-				ExitGame();
+				if (Input.GetKeyDown(KeyCode.Y))
+				{
+					ExitGame();
+				}
+				else if (Input.GetKeyDown(KeyCode.N))
+				{
+					Pause(false);
+				}
 			}
-			else if (Input.GetKeyDown(KeyCode.N) & gamePaused)
+			else
 			{
-				UnpauseGame();
-			}
-
-			if (!gamePaused & Time.timeScale != 1f)
-			{
-				Time.timeScale = 1f;
-			}
-
-			if (Singleton<InputManager>.Instance.GetActionKeyDown(InputAction.UseItem) && Time.timeScale != 0f)
-			{
-				UseItem();
-			}
-
-			if (Input.GetAxis("Mouse ScrollWheel") > 0f && Time.timeScale != 0f)
-			{
-				DecreaseItemSelection();
-			}
-			else if (Input.GetAxis("Mouse ScrollWheel") < 0f && Time.timeScale != 0f)
-			{
-				IncreaseItemSelection();
+				if (Time.timeScale != 1f)
+				{
+					Time.timeScale = 1f;
+				}
 			}
 
 			if (Time.timeScale != 0f)
 			{
+				if (Singleton<InputManager>.Instance.GetActionKeyDown(InputAction.UseItem))
+				{
+					UseItem();
+				}
+
+				if (Input.GetAxis("Mouse ScrollWheel") > 0f)
+				{
+					ItemSelect(false);
+				}
+				else if (Input.GetAxis("Mouse ScrollWheel") < 0f)
+				{
+					ItemSelect(true);
+				}
+
 				if (Singleton<InputManager>.Instance.GetActionKey(InputAction.Slot0))
 				{
 					itemSelected = 0;
@@ -111,7 +125,7 @@ public class GameControllerScript : MonoBehaviour
 			Time.timeScale = 0f;
 			gameOverDelay -= Time.unscaledDeltaTime * 0.5f;
 			playerCamera.farClipPlane = gameOverDelay * 400f; //Set camera farClip 
-			audioDevice.PlayOneShot(aud_buzz);
+			audioDevice.PlayOneShot(sfx[2]);
 
 			if (gameOverDelay <= 0f)
 			{
@@ -130,7 +144,7 @@ public class GameControllerScript : MonoBehaviour
 
 		if (finaleMode && !audioDevice.isPlaying && exitsReached == 3)
 		{
-			audioDevice.clip = aud_MachineLoop;
+			audioDevice.clip = CRAZYESCAPE[3];
 			audioDevice.loop = true;
 			audioDevice.Play();
 		}
@@ -140,47 +154,62 @@ public class GameControllerScript : MonoBehaviour
 		if (mode == "story")
 		{
 			notebookCount.text = notebooks.ToString() + "/7 Notebooks";
+			if (notebooks == 2)
+			{
+				ActivateSpoopMode();
+			}
+			if (notebooks == 7)
+			{
+				ActivateFinaleMode();
+			}
 		}
 		else
 		{
 			notebookCount.text = notebooks.ToString() + " Notebooks";
 		}
-
-		if (notebooks == 7 & mode == "story")
-		{
-			ActivateFinaleMode();
-		}
 	}
 	public void CollectNotebook()
 	{
+		player.stamina = 100f;
 		notebooks++;
+		ok = 1f;
+		popup.gameObject.GetComponent<AudioSource>().Play();
 		UpdateNotebookCount();
 	}
-	public void LockMouse()
+	public void MouseLock(bool lok)
 	{
-		if (!learningActive)
+		if (lok)
 		{
-			cursorController.LockCursor(); //Prevent the cursor from moving
-			mouseLocked = true;
-			reticle.SetActive(true);
+			if (!learningActive)
+			{
+				cursorController.LockCursor(); //Prevent the cursor from moving
+				mouseLocked = true;
+				reticle.SetActive(true);
+			}
+		}
+		else
+		{
+			cursorController.UnlockCursor(); //Allow the cursor to move
+			mouseLocked = false;
+			reticle.SetActive(false);
 		}
 	}
-	public void UnlockMouse()
+	public void Pause(bool pause)
 	{
-		cursorController.UnlockCursor(); //Allow the cursor to move
-		mouseLocked = false;
-		reticle.SetActive(false);
-	}
-	public void PauseGame()
-	{
-		if (!learningActive)
+		gamePaused = pause;
+		pauseMenu.SetActive(pause);
+		if (pause)
 		{
+			if (!learningActive)
 			{
-				UnlockMouse();
+				MouseLock(false);
+				Time.timeScale = 0f;
 			}
-			Time.timeScale = 0f;
-			gamePaused = true;
-			pauseMenu.SetActive(true);
+		}
+		else
+		{
+			Time.timeScale = 1f;
+			MouseLock(true);
 		}
 	}
 	public void ExitGame()
@@ -188,40 +217,30 @@ public class GameControllerScript : MonoBehaviour
 		Time.timeScale = 1f;
 		SceneManager.LoadScene(ExitGameScene);
 	}
-	public void UnpauseGame()
-	{
-		Time.timeScale = 1f;
-		gamePaused = false;
-		pauseMenu.SetActive(false);
-		LockMouse();
-	}
 	public void ActivateSpoopMode()
 	{
 		spoopMode = true; //Tells the game its time for spoop
-		entrance_0.Lower(); //Lowers all the exits
-		entrance_1.Lower();
-		entrance_2.Lower();
-		entrance_3.Lower();
+		foreach (EntranceScript e in entrances)
+		{
+			e.Lower(); //Lowers all the exits
+		}
 		baldiTutor.SetActive(false); //Turns off Baldi(The one that you see at the start of the game)
-		baldi.SetActive(true); //Turns on Baldi
-        principal.SetActive(true); //Turns on Principal
-        crafters.SetActive(true); //Turns on Crafters
-        playtime.SetActive(true); //Turns on Playtime
-        gottaSweep.SetActive(true); //Turns on Gotta Sweep
-        bully.SetActive(true); //Turns on Bully
-        firstPrize.SetActive(true); //Turns on First-Prize
+		foreach (GameObject npc in spoopNpcs)
+		{
+			npc.SetActive(true);
+		}
 		//TestEnemy.SetActive(true); //Turns on Test-Enemy (Bonus)
-		audioDevice.PlayOneShot(aud_Hang); //Plays the hang sound
+		audioDevice.PlayOneShot(sfx[3]); //Plays the hang sound
 		learnMusic.Stop(); //Stop all the music
 		schoolMusic.Stop();
 	}
 	private void ActivateFinaleMode()
 	{
 		finaleMode = true;
-		entrance_0.Raise(); //Raise all the enterances(make them appear)
-		entrance_1.Raise();
-		entrance_2.Raise();
-		entrance_3.Raise();
+		foreach (EntranceScript e in entrances)
+		{
+			e.Raise(); //Raise all the enterances(make them appear)
+		}
 	}
 	public void GetAngry(float value) //Make Baldi get angry
 	{
@@ -231,59 +250,63 @@ public class GameControllerScript : MonoBehaviour
 		}
 		baldiScrpt.GetAngry(value);
 	}
-	public void ActivateLearningGame()
+	public void LearnGame(GameObject sub, bool activate)
 	{
-		//camera.cullingMask = 0; //Sets the cullingMask to nothing
-		learningActive = true;
-		UnlockMouse(); //Unlock the mouse
-		tutorBaldi.Stop(); //Make tutor Baldi stop talking
-		if (!spoopMode) //If the player hasn't gotten a question wrong
+		if (activate)
 		{
-			schoolMusic.Stop(); //Start playing the learn music
-			learnMusic.Play();
+			//camera.cullingMask = 0; //Sets the cullingMask to nothing
+			learningActive = true;
+			MouseLock(false); //Unlock the mouse
+			tutorBaldi.Stop(); //Make tutor Baldi stop talking
+			if (!spoopMode) //If the player hasn't gotten a question wrong
+			{
+				schoolMusic.Stop(); //Start playing the learn music
+				learnMusic.Play();
+			}
+		}
+		else
+		{
+			playerCamera.cullingMask = cullingMask; //Sets the cullingMask to Everything
+			learningActive = false;
+			Destroy(sub);
+			MouseLock(true); //Prevent the mouse from moving
+			if (player.stamina < 100f) //Reset Stamina
+			{
+				player.stamina = 100f;
+			}
+			if (!spoopMode) //If it isn't spoop mode, play the school music
+			{
+				schoolMusic.Play();
+				learnMusic.Stop();
+			}
+			if (notebooks == 1 & !spoopMode) // If this is the players first notebook and they didn't get any questions wrong, reward them with a quarter
+			{
+				quarter.SetActive(true);
+				tutorBaldi.PlayOneShot(aud_Prize);
+			}
+			else if (notebooks == 7 & mode == "story") // Plays the all 7 notebook sound
+			{
+				audioDevice.PlayOneShot(aud_AllNotebooks, 0.8f);
+			}
 		}
 	}
-	public void DeactivateLearningGame(GameObject subject)
+	void ItemSelect(bool up)
 	{
-		playerCamera.cullingMask = cullingMask; //Sets the cullingMask to Everything
-		learningActive = false;
-		Destroy(subject);
-		LockMouse(); //Prevent the mouse from moving
-		if (player.stamina < 100f) //Reset Stamina
+		if (up)
 		{
-			player.stamina = 100f;
+			itemSelected++;
+			if (itemSelected > 2)
+			{
+				itemSelected = 0;
+			}
 		}
-		if (!spoopMode) //If it isn't spoop mode, play the school music
+		else
 		{
-			schoolMusic.Play();
-			learnMusic.Stop();
-		}
-		if (notebooks == 1 & !spoopMode) // If this is the players first notebook and they didn't get any questions wrong, reward them with a quarter
-		{
-			quarter.SetActive(true);
-			tutorBaldi.PlayOneShot(aud_Prize);
-		}
-		else if (notebooks == 7 & mode == "story") // Plays the all 7 notebook sound
-		{
-			audioDevice.PlayOneShot(aud_AllNotebooks, 0.8f);
-		}
-	}
-	private void IncreaseItemSelection()
-	{
-		itemSelected++;
-		if (itemSelected > 2)
-		{
-			itemSelected = 0;
-		}
-		itemSelect.anchoredPosition = new Vector3(itemSelectOffset[itemSelected], (itemSelectPosition)); //Moves the item selector background(the red rectangle)
-		UpdateItemName();
-	}
-	private void DecreaseItemSelection()
-	{
-		itemSelected--;
-		if (itemSelected < 0)
-		{
-			itemSelected = 2;
+			itemSelected--;
+			if (itemSelected < 0)
+			{
+				itemSelected = 2;
+			}
 		}
 		itemSelect.anchoredPosition = new Vector3(itemSelectOffset[itemSelected], (itemSelectPosition)); //Moves the item selector background(the red rectangle)
 		UpdateItemName();
@@ -319,31 +342,30 @@ public class GameControllerScript : MonoBehaviour
 	}
 	private void UseItem()
 	{
-		if (item[itemSelected] != 0)
+		int it = item[itemSelected];
+		Ray ray = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
+		RaycastHit raycastHit;
+		if (it != 0)
 		{
-			if (item[itemSelected] == 1)
+			if (it == 1)
 			{
 				player.stamina = player.maxStamina * 2f;
 				ResetItem();
 				//player.ResetGuilt("food", 3f);
 			}
-			else if (item[itemSelected] == 2)
+			else if (it == 2)
 			{
-				Ray ray = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
-				RaycastHit raycastHit;
 				if (Physics.Raycast(ray, out raycastHit) && (raycastHit.collider.tag == "SwingingDoor" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f))
 				{
 					raycastHit.collider.gameObject.GetComponent<SwingingDoorScript>().LockDoor(15f);
 					ResetItem();
 				}
 			}
-			else if (item[itemSelected] == 3)
+			else if (it == 3)
 			{
-				Ray ray2 = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
-				RaycastHit raycastHit2;
-				if (Physics.Raycast(ray2, out raycastHit2) && (raycastHit2.collider.tag == "Door" & Vector3.Distance(playerTransform.position, raycastHit2.transform.position) <= 10f))
+				if (Physics.Raycast(ray, out raycastHit) && (raycastHit.collider.tag == "Door" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f))
 				{
-					DoorScript component = raycastHit2.collider.gameObject.GetComponent<DoorScript>();
+					DoorScript component = raycastHit.collider.gameObject.GetComponent<DoorScript>();
 					if (component.DoorLocked)
 					{
 						component.UnlockDoor();
@@ -352,86 +374,78 @@ public class GameControllerScript : MonoBehaviour
 					}
 				}
 			}
-			else if (item[itemSelected] == 4)
+			else if (it == 4)
 			{
 				Instantiate<GameObject>(bsodaSpray, playerTransform.position, cameraTransform.rotation);
 				ResetItem();
 				player.ResetGuilt("drink", 1f);
-				audioDevice.PlayOneShot(aud_Soda);
+				audioDevice.PlayOneShot(sfx[0]);
 			}
-			else if (item[itemSelected] == 5)
+			else if (it == 5)
 			{
-				Ray ray3 = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
-				RaycastHit raycastHit3;
-				if (Physics.Raycast(ray3, out raycastHit3))
+				if (Physics.Raycast(ray, out raycastHit))
 				{
-					if (raycastHit3.collider.name == "BSODAMachine" & Vector3.Distance(playerTransform.position, raycastHit3.transform.position) <= 10f)
+					if (raycastHit.collider.name == "BSODAMachine" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f)
 					{
 						ResetItem();
 						CollectItem(4);
 					}
-					else if (raycastHit3.collider.name == "ZestyMachine" & Vector3.Distance(playerTransform.position, raycastHit3.transform.position) <= 10f)
+					else if (raycastHit.collider.name == "ZestyMachine" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f)
 					{
 						ResetItem();
 						CollectItem(1);
 					}
-					else if (raycastHit3.collider.name == "PayPhone" & Vector3.Distance(playerTransform.position, raycastHit3.transform.position) <= 10f)
+					else if (raycastHit.collider.name == "PayPhone" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f)
 					{
-						raycastHit3.collider.gameObject.GetComponent<TapePlayerScript>().Play();
+						raycastHit.collider.gameObject.GetComponent<TapePlayerScript>().Play();
 						ResetItem();
 					}
 				}
 			}
-			else if (item[itemSelected] == 6)
+			else if (it == 6)
 			{
-				Ray ray4 = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
-				RaycastHit raycastHit4;
-				if (Physics.Raycast(ray4, out raycastHit4) && (raycastHit4.collider.name == "TapePlayer" & Vector3.Distance(playerTransform.position, raycastHit4.transform.position) <= 10f))
+				if (Physics.Raycast(ray, out raycastHit) && (raycastHit.collider.name == "TapePlayer" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f))
 				{
-					raycastHit4.collider.gameObject.GetComponent<TapePlayerScript>().Play();
+					raycastHit.collider.gameObject.GetComponent<TapePlayerScript>().Play();
 					ResetItem();
 				}
 			}
-			else if (item[itemSelected] == 7)
+			else if (it == 7)
 			{
 				GameObject gameObject = Instantiate<GameObject>(alarmClock, playerTransform.position, cameraTransform.rotation);
 				gameObject.GetComponent<AlarmClockScript>().baldi = baldiScrpt;
 				ResetItem();
 			}
-			else if (item[itemSelected] == 8)
+			else if (it == 8)
 			{
-				Ray ray5 = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
-				RaycastHit raycastHit5;
-				if (Physics.Raycast(ray5, out raycastHit5) && (raycastHit5.collider.tag == "Door" & Vector3.Distance(playerTransform.position, raycastHit5.transform.position) <= 10f))
+				if (Physics.Raycast(ray, out raycastHit) && (raycastHit.collider.tag == "Door" & Vector3.Distance(playerTransform.position, raycastHit.transform.position) <= 10f))
 				{
-					raycastHit5.collider.gameObject.GetComponent<DoorScript>().SilenceDoor();
+					raycastHit.collider.gameObject.GetComponent<DoorScript>().SilenceDoor();
 					ResetItem();
-					audioDevice.PlayOneShot(aud_Spray);
+					audioDevice.PlayOneShot(sfx[1]);
 				}
 			}
-			else if (item[itemSelected] == 9)
+			else if (it == 9)
 			{
-				Ray ray6 = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
-				RaycastHit raycastHit6;
 				if (player.jumpRope)
 				{
 					player.DeactivateJumpRope();
 					playtimeScript.Disappoint();
 					ResetItem();
 				}
-				else if (Physics.Raycast(ray6, out raycastHit6) && raycastHit6.collider.name == "1st Prize")
+				else if (Physics.Raycast(ray, out raycastHit) && raycastHit.collider.name == "1st Prize")
 				{
 					firstPrizeScript.GoCrazy();
 					ResetItem();
 				}
 			}
-			else if (item[itemSelected] == 10)
+			else if (it == 10)
 			{
 				player.ActivateBoots();
 				StartCoroutine(BootAnimation());
 				ResetItem();
 			}
-			else if (item[itemSelected] == 11)
+			else if (it == 11)
 			{
 				StartCoroutine(Teleporter());
 				ResetItem();
@@ -514,7 +528,7 @@ public class GameControllerScript : MonoBehaviour
 	{
 		AILocationSelector.GetNewTarget();
 		player.transform.position = AILocationSelector.transform.position + Vector3.up * player.height;
-		audioDevice.PlayOneShot(aud_Teleport);
+		audioDevice.PlayOneShot(sfx[5]);
 	}
 	private void ResetItem()
 	{
@@ -537,26 +551,23 @@ public class GameControllerScript : MonoBehaviour
 		exitsReached++;
 		if (exitsReached == 1)
 		{
+			audioDevice.volume = 0.8f;
 			RenderSettings.ambientLight = Color.red; //Make everything red
 			//RenderSettings.fog = true;
-			audioDevice.PlayOneShot(aud_Switch, 0.8f);
-			audioDevice.clip = aud_MachineQuiet;
+			audioDevice.PlayOneShot(sfx[4]);
+			audioDevice.clip = CRAZYESCAPE[0];
 			audioDevice.loop = true;
-			audioDevice.Play(); //start playing the weird sound
 		}
 		if (exitsReached == 2) //Play a sound
 		{
-			audioDevice.volume = 0.8f;
-			audioDevice.clip = aud_MachineStart;
-			audioDevice.loop = true;
-			audioDevice.Play();
+			audioDevice.clip = CRAZYESCAPE[1];
 		}
 		if (exitsReached == 3) //Play a even louder sound
 		{
-			audioDevice.clip = aud_MachineRev;
+			audioDevice.clip = CRAZYESCAPE[2];
 			audioDevice.loop = false;
-			audioDevice.Play();
 		}
+		audioDevice.Play();
 	}
 	public void Fliparoo()
 	{
@@ -575,27 +586,17 @@ public class GameControllerScript : MonoBehaviour
 	public Transform cameraTransform;
 	public Camera playerCamera;
     private int cullingMask;
-	public EntranceScript entrance_0;
-	public EntranceScript entrance_1;
-	public EntranceScript entrance_2;
-	public EntranceScript entrance_3;
+	public EntranceScript[] entrances;
 	public GameObject baldiTutor;
-	public GameObject baldi;
 	public BaldiScript baldiScrpt;
 	public AudioClip aud_Prize;
 	public AudioClip aud_PrizeMobile;
 	public AudioClip aud_AllNotebooks;
-	public AudioClip aud_Teleport;
 	private bool flipped;
-	public GameObject principal;
-	public GameObject crafters;
-	public GameObject playtime;
-	public PlaytimeScript playtimeScript;
-	public GameObject gottaSweep;
-	public GameObject bully;
-	public GameObject firstPrize;
+	public GameObject[] spoopNpcs;
 	public GameObject TestEnemy;
 	public FirstPrizeScript firstPrizeScript;
+	public PlaytimeScript playtimeScript;
 	public GameObject quarter;
 	public AudioSource tutorBaldi;
 	public RectTransform boots;
@@ -643,15 +644,10 @@ public class GameControllerScript : MonoBehaviour
 	private float gameOverDelay;
 	public string GameOverScene;
 	private AudioSource audioDevice;
-	public AudioClip aud_Soda;
-	public AudioClip aud_Spray;
-	public AudioClip aud_buzz;
-	public AudioClip aud_Hang;
-	public AudioClip aud_MachineQuiet;
-	public AudioClip aud_MachineStart;
-	public AudioClip aud_MachineRev;
-	public AudioClip aud_MachineLoop;
-	public AudioClip aud_Switch;
+	public AudioClip[] sfx;
+	public AudioClip[] CRAZYESCAPE;
 	public AudioSource schoolMusic;
 	public AudioSource learnMusic;
+	public TMP_Text popup;
+	public float ok;
 }

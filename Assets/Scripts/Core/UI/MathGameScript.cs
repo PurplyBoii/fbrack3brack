@@ -9,7 +9,7 @@ public class MathGameScript : MonoBehaviour
 {
     private void Start()
     {
-        gc.ActivateLearningGame();
+        gc.LearnGame(gameObject, true);
         if (gc.notebooks == 1)
         {
             QueueAudio(bal_intro);
@@ -329,7 +329,7 @@ public class MathGameScript : MonoBehaviour
         {
             baldiScript.GetAngry(-1f);
         }
-        gc.DeactivateLearningGame(gameObject);
+        gc.LearnGame(gameObject, false);
     }
     public void ButtonPress(int value)
     {
