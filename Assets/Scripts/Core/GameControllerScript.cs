@@ -154,7 +154,7 @@ public class GameControllerScript : MonoBehaviour
 		if (mode == "story")
 		{
 			notebookCount.text = notebooks.ToString() + "/7 Notebooks";
-			if (notebooks == 2)
+			if (notebooks == 3)
 			{
 				ActivateSpoopMode();
 			}
