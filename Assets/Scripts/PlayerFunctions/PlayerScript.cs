@@ -135,9 +135,9 @@ public class PlayerScript : MonoBehaviour
 	{
 		if (other.transform.name == "Baldi" & !gc.debugMode)
 		{
-			gameOver = true;
+			/*gameOver = true;
 			RenderSettings.skybox = blackSky; //Sets the skybox black
-			StartCoroutine(KeepTheHudOff()); //Hides the Hud
+			StartCoroutine(KeepTheHudOff()); //Hides the Hud*/
 		}
 		else if (other.transform.name == "Playtime" & !jumpRope & playtime.playCool <= 0f)
 		{

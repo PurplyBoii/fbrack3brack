@@ -153,12 +153,12 @@ public class GameControllerScript : MonoBehaviour
 	{
 		if (mode == "story")
 		{
-			notebookCount.text = notebooks.ToString() + "/7 Notebooks";
+			notebookCount.text = notebooks.ToString() + "/8 Notebooks";
 			if (notebooks == 3)
 			{
 				ActivateSpoopMode();
 			}
-			if (notebooks == 7)
+			if (notebooks == 8)
 			{
 				ActivateFinaleMode();
 			}
@@ -170,7 +170,10 @@ public class GameControllerScript : MonoBehaviour
 	}
 	public void CollectNotebook()
 	{
-		player.stamina = 100f;
+		if (player.stamina < 100f)
+		{
+			player.stamina = 100f;
+		}
 		notebooks++;
 		ok = 1f;
 		popup.gameObject.GetComponent<AudioSource>().Play();
@@ -284,7 +287,7 @@ public class GameControllerScript : MonoBehaviour
 				quarter.SetActive(true);
 				tutorBaldi.PlayOneShot(aud_Prize);
 			}
-			else if (notebooks == 7 & mode == "story") // Plays the all 7 notebook sound
+			else if (notebooks == 8 & mode == "story") // Plays the all 7 notebook sound
 			{
 				audioDevice.PlayOneShot(aud_AllNotebooks, 0.8f);
 			}
