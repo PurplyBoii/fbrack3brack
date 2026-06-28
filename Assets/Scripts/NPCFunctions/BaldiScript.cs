@@ -141,6 +141,18 @@ public class BaldiScript : MonoBehaviour
 		antiHearing = true; //Set the antihearing variable to true for other scripts
 		antiHearingTime = t; //Set the time the tape's effect on baldi will last
 	}
+	void OnTriggerEnter(Collider other)
+	{
+		if (other.tag == "Player")
+		{
+			baldiAudio.Stop();
+			baldiAnimator.enabled = false;
+			baldiAnimator.gameObject.SetActive(false);
+			particleBlood.SetActive(true);
+			timeToMove = Mathf.Infinity;
+		}
+	}
+
 	public bool db;
 	public float baseTime;
 	public float speed;
@@ -169,4 +181,5 @@ public class BaldiScript : MonoBehaviour
 	private Vector3 previous;
 	private bool rumble;
 	private NavMeshAgent agent;
+	public GameObject particleBlood;
 }

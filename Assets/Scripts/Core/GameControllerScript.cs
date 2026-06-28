@@ -170,7 +170,10 @@ public class GameControllerScript : MonoBehaviour
 	}
 	public void CollectNotebook()
 	{
-		player.stamina = 100f;
+		if (player.stamina < 100f)
+		{
+			player.stamina = 100f;
+		}
 		notebooks++;
 		ok = 1f;
 		popup.gameObject.GetComponent<AudioSource>().Play();
