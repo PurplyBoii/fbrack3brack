@@ -101,7 +101,7 @@ public class BaldiScript : MonoBehaviour
 			Wander();
 		}
 		moveFrames = 10f;
-		timeToMove = baldiWait - baldiTempAnger;
+		timeToMove = 0.01f;
 		previous = transform.position; // Set previous to Baldi's current location
 		baldiAudio.PlayOneShot(slap); //Play the slap sound
 		baldiAnimator.SetTrigger("slap"); // Play the slap animation
